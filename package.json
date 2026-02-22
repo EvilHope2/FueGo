@@ -10,8 +10,6 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@dataconnect/admin-generated": "file:src/dataconnect-admin-generated",
-    "@dataconnect/generated": "file:src/dataconnect-generated",
     "@opentelemetry/api": "^1.9.0",
     "clsx": "^2.1.1",
     "firebase": "^10.14.1",
