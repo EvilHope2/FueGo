@@ -1,0 +1,4 @@
+﻿.next
+node_modules
+src/dataconnect-generated
+src/dataconnect-admin-generated

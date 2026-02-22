@@ -1,0 +1,16 @@
+@import "mapbox-gl/dist/mapbox-gl.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+}
+
+body {
+  background: radial-gradient(circle at 0% 0%, #d1fae5 0, #f8fafc 30%, #eef2ff 100%);
+  color: var(--foreground);
+}
+

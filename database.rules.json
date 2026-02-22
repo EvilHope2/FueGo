@@ -1,0 +1,32 @@
+{
+  "rules": {
+    "presence": {
+      ".indexOn": ["online", "lastSeenAt"],
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "locations": {
+      ".indexOn": ["geohash", "updatedAt"],
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "rideOffers": {
+      "$driverId": {
+        ".read": "auth != null && auth.uid === $driverId",
+        "$rideId": {
+          ".write": false
+        }
+      }
+    },
+    "rideStatus": {
+      "$rideId": {
+        ".read": "auth != null && (data.child('clientId').val() === auth.uid || data.child('driverId').val() === auth.uid)",
+        ".write": false
+      }
+    }
+  }
+}
