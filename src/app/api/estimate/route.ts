@@ -3,6 +3,8 @@ import { getAdminDb } from "@/lib/firebaseAdmin";
 import { computePrice, getNowInTimeZone, normalizePricingDoc, RIO_GRANDE_TZ } from "@/lib/pricing";
 import { verifyRequestUser } from "@/lib/serverAuth";
 
+export const runtime = "nodejs";
+
 export async function POST(req: NextRequest) {
   try {
     await verifyRequestUser(req);

@@ -103,10 +103,28 @@ npm run dev
 npm run test
 ```
 
+## Validacion de build local
+```bash
+npm ci
+npm run lint
+npm run typecheck
+npm run build
+```
+
 ## Deploy en Vercel
 1. Importar repo
-2. Cargar variables de entorno
-3. Deploy
+2. Framework Preset: `Next.js`
+3. Root Directory: dejar vacio (root del repo)
+4. Build Command: `npm run build`
+5. Output Directory: dejar vacio
+6. Node.js Version: `20.x`
+7. Cargar variables de entorno de `.env.example` (Production/Preview)
+8. Deploy
+
+Si usaste una URL custom (`fue-go.vercel.app`) y ves `404`, reasigna el alias al ultimo deployment:
+```bash
+npx vercel alias set <deployment-url> fue-go.vercel.app
+```
 
 ## Seed admin (opcional)
 ```bash

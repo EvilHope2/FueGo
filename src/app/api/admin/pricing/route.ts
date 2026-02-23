@@ -3,6 +3,8 @@ import { getAdminDb } from "@/lib/firebaseAdmin";
 import { normalizePricingDoc, validatePricing } from "@/lib/pricing";
 import { verifyRequestUser } from "@/lib/serverAuth";
 
+export const runtime = "nodejs";
+
 export async function POST(req: NextRequest) {
   try {
     const { role } = await verifyRequestUser(req);

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebaseAdmin";
 import { verifyRequestUser } from "@/lib/serverAuth";
 
+export const runtime = "nodejs";
+
 export async function POST(req: NextRequest) {
   try {
     const { role } = await verifyRequestUser(req);

@@ -2,6 +2,8 @@
 import { getAdminDb, getAdminRtdb } from "@/lib/firebaseAdmin";
 import { verifyRequestUser } from "@/lib/serverAuth";
 
+export const runtime = "nodejs";
+
 const transitions: Record<string, string[]> = {
   accepted: ["arriving", "canceled"],
   arriving: ["in_progress", "canceled"],
