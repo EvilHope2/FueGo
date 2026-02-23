@@ -1,137 +1,117 @@
-﻿# FueGo
+# FueGo (Next.js + Firebase + RTDB + Mapbox)
 
-FueGo es una PWA tipo ride-hailing para Rio Grande, Tierra del Fuego.
+Aplicacion tipo Uber basica para Rio Grande, Tierra del Fuego.
+Este repositorio contiene **solo frontend Next.js** con API Routes server-side.
 
 ## Stack
-- Next.js 14 (App Router) + TypeScript
+- Next.js 14 App Router + TypeScript
 - Tailwind CSS
-- Firebase Auth
-- Firestore (persistente)
-- Realtime Database (realtime)
-- API routes con Firebase Admin
-- Mapbox GL JS + Geocoding + Directions
-- PWA con `manifest.webmanifest` + `sw.js`
+- Firebase Auth + Firestore + Realtime Database
+- Mapbox GL + Geocoding + Directions
+- PWA (manifest + service worker)
+- Deploy en Netlify
 
-## Arquitectura de datos
-### Firestore (persistente)
-- `users/{uid}`
-- `drivers/{uid}` (perfil: estado, vehiculo)
-- `rides/{rideId}` (fuente de verdad persistente)
-- `settings/pricing`
-
-### RTDB (tiempo real)
-- `presence/{driverId}`: `online`, `lastSeenAt`
-- `locations/{driverId}`: `lat`, `lng`, `geohash`, `updatedAt`
-- `rideOffers/{driverId}/{rideId}`
-- `rideStatus/{rideId}`
-
-## Roles y rutas
-- Publico: `/`, `/login`
-- Cliente: `/cliente/home`, `/cliente/buscando`, `/cliente/viaje/[rideId]`, `/cliente/historial`
-- Chofer: `/chofer/home`, `/chofer/viaje/[rideId]`, `/chofer/ganancias`
-- Admin: `/admin/choferes`, `/admin/viajes`, `/admin/tarifas`
+## Estructura
+- `app/` rutas UI y `app/api/*/route.ts`
+- `components/` mapa, autocomplete, badge
+- `lib/` firebase, pricing, guards, presencia, tracking
+- `public/` manifest, sw, iconos
+- `styles/globals.css`
 
 ## Variables de entorno
-Copiar `.env.example` a `.env.local`.
+Copiar `.env.example` a `.env.local` y completar:
 
-### Firebase client
 - `NEXT_PUBLIC_FIREBASE_API_KEY`
 - `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
 - `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
-- `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
-- `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
 - `NEXT_PUBLIC_FIREBASE_APP_ID`
 - `NEXT_PUBLIC_FIREBASE_DATABASE_URL`
-
-### Firebase Admin (API routes)
+- `NEXT_PUBLIC_MAPBOX_TOKEN`
+- `NEXT_PUBLIC_SUPPORT_WHATSAPP`
 - `FIREBASE_ADMIN_PROJECT_ID`
 - `FIREBASE_ADMIN_CLIENT_EMAIL`
 - `FIREBASE_ADMIN_PRIVATE_KEY`
-- `FIREBASE_ADMIN_DATABASE_URL`
 
-### Mapbox
-- `NEXT_PUBLIC_MAPBOX_TOKEN`
+Nota clave Admin SDK:
+`FIREBASE_ADMIN_PRIVATE_KEY` debe guardarse en una linea con `\\n` y el backend la transforma con `replace(/\\n/g, "\n")`.
 
-### Otros
-- `NEXT_PUBLIC_SUPPORT_WHATSAPP`
-- `FUEGO_ADMIN_UID` (solo para seed opcional)
-
-## Mapbox token
-1. Ir a https://account.mapbox.com/access-tokens/
-2. Crear token publico `pk...`
-3. Permisos minimos: `styles:read`, `geocoding:read`
-4. Guardarlo en `NEXT_PUBLIC_MAPBOX_TOKEN`
-
-## Reglas de seguridad
-- Firestore: `firestore.rules`
-- RTDB: `database.rules.json`
-
-Publicar reglas RTDB desde Firebase Console o CLI:
-```bash
-firebase deploy --only database
-```
-
-## Endpoints
-- `POST /api/estimate`: calcula precio server-side
-- `POST /api/rides/create`: crea ride persistente + inicializa `rideStatus` en RTDB
-- `POST /api/match`: lee online/locations en RTDB, crea offers en RTDB, actualiza estado en RTDB + Firestore
-- `POST /api/driver/accept`: lock por transaccion en Firestore + espejo realtime en RTDB
-- `POST /api/driver/status`: avanza estados en Firestore + RTDB
-
-## Flujo realtime
-1. Chofer online:
-- `setDriverOnline()` en RTDB
-- `onDisconnect()` fuerza offline
-- `startLocationTracking()` escribe ubicacion + geohash cada cambio
-2. Cliente escucha `rideStatus/{rideId}`
-3. Chofer escucha `rideOffers/{driverId}`
-4. Cliente puede ver ubicacion del chofer escuchando `locations/{driverId}`
-
-## Pricing
-- `precioBase = max(minimumFare, baseFare + km * perKm)`
-- `precioFinal = redondear(precioBase * timeMultiplier * weatherMultiplier)`
-- Si varias reglas horarias aplican, se usa la de mayor multiplicador.
-
-## Ejecutar
+## Ejecutar local
 ```bash
 npm install
 npm run dev
 ```
 
-## Tests
+## Build local
 ```bash
-npm run test
-```
-
-## Validacion de build local
-```bash
-npm ci
-npm run lint
-npm run typecheck
 npm run build
 ```
 
-## Deploy en Netlify
-1. Importar repo desde GitHub.
-2. Build settings:
-   - Base directory: vacio (root)
-   - Build command: `npm run build`
-   - Publish directory: `.next`
-3. Asegurar Node `20` en Netlify.
-4. Cargar todas las env vars de `.env.example`.
+## Deploy Netlify (paso a paso)
+1. Crear sitio en Netlify desde GitHub.
+2. Seleccionar este repo.
+3. Netlify detecta `netlify.toml`:
+   - build command: `npm run build`
+   - publish: `.next`
+   - plugin: `@netlify/plugin-nextjs`
+4. Configurar Environment Variables (las de arriba).
 5. Deploy.
 
-Este repo incluye `netlify.toml` + plugin oficial `@netlify/plugin-nextjs`.
-
-Notas:
-- La carpeta `functions/` (Firebase Functions) queda fuera del typecheck/build del frontend por `tsconfig.json`.
-- Las API routes de Next que usan Admin SDK fuerzan `runtime = "nodejs"`.
-- `FIREBASE_ADMIN_PRIVATE_KEY` debe guardarse con `\\n` y en runtime se transforma con `replace(/\\n/g, "\n")`.
-
-## Seed admin (opcional)
-```bash
-node scripts/seed-admin.mjs
+## Pricing inicial
+Crear doc `settings/pricing` en Firestore:
+```json
+{
+  "baseFare": 900,
+  "perKm": 950,
+  "minimumFare": 2500,
+  "rounding": 50,
+  "timeRules": [
+    {
+      "name": "Nocturno",
+      "start": "22:00",
+      "end": "06:00",
+      "multiplier": 1.15,
+      "enabled": true
+    }
+  ],
+  "weatherRules": {
+    "enabled": false,
+    "mode": "manual",
+    "multiplier": 1.2,
+    "label": "Clima"
+  }
+}
 ```
 
-## Nota PWA Android
-En Chrome Android: menu -> `Agregar a pantalla principal`.
+## Crear Admin
+1. Registrar usuario en `/login`.
+2. En Firestore, en `users/{uid}`, setear `role: "admin"`.
+
+## Flujo de prueba (2 sesiones)
+1. Sesion A (cliente): login -> `/cliente/home` -> elegir origen/destino -> pedir viaje.
+2. Sesion B (chofer): login chofer -> `/chofer/home` -> poner Online -> aceptar oferta.
+3. Chofer cambia estados en `/chofer/viaje/[rideId]`.
+4. Cliente ve status y ubicacion en `/cliente/viaje/[rideId]`.
+5. Admin edita tarifas en `/admin/tarifas`.
+
+## API routes implementadas
+- `POST /api/estimate`
+- `POST /api/rides/create`
+- `POST /api/match`
+- `POST /api/driver/accept`
+- `POST /api/driver/status`
+
+Todas las rutas que usan Admin SDK tienen:
+```ts
+export const runtime = "nodejs";
+```
+
+## Reglas
+- Firestore: `firestore.rules`
+- RTDB: `database.rules.json`
+
+## PWA
+- Manifest: `public/manifest.json`
+- Service Worker: `public/sw.js`
+- Iconos: `public/icons/*`
+- Instalable en Android desde Chrome (`Agregar a pantalla principal`).
+

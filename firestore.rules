@@ -1,57 +1,39 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isSignedIn() {
+    function signedIn() {
       return request.auth != null;
     }
 
-    function userDoc(uid) {
-      return get(/databases/$(database)/documents/users/$(uid));
-    }
-
-    function role(uid) {
-      return userDoc(uid).data.role;
-    }
-
     function isAdmin() {
-      return isSignedIn() && role(request.auth.uid) == "admin";
+      return signedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
     }
 
     match /users/{uid} {
-      allow read, write: if isSignedIn() && request.auth.uid == uid;
+      allow read, write: if signedIn() && request.auth.uid == uid;
     }
 
     match /drivers/{uid} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn() && request.auth.uid == uid;
-      allow update: if isAdmin() || (isSignedIn() && request.auth.uid == uid);
-      allow delete: if isAdmin();
+      allow read: if signedIn();
+      allow write: if isAdmin() || (signedIn() && request.auth.uid == uid && !('status' in request.resource.data));
     }
 
     match /rides/{rideId} {
-      allow create: if isSignedIn() && request.resource.data.clientId == request.auth.uid;
-
-      allow read: if isAdmin()
-        || (isSignedIn() && resource.data.clientId == request.auth.uid)
-        || (isSignedIn() && resource.data.driverId == request.auth.uid)
-        || (isSignedIn() && exists(/databases/$(database)/documents/rides/$(rideId)/offers/$(request.auth.uid)));
-
-      allow update: if isAdmin()
-        || (isSignedIn() && resource.data.clientId == request.auth.uid)
-        || (isSignedIn() && resource.data.driverId == request.auth.uid);
-
-      allow delete: if isAdmin();
+      allow create: if signedIn() && request.resource.data.clientId == request.auth.uid;
+      allow read: if signedIn() && (
+        resource.data.clientId == request.auth.uid ||
+        resource.data.driverId == request.auth.uid ||
+        isAdmin()
+      );
+      allow update: if isAdmin() || (signedIn() && resource.data.driverId == request.auth.uid);
 
       match /offers/{driverId} {
-        allow read: if isAdmin()
-          || (isSignedIn() && request.auth.uid == driverId)
-          || (isSignedIn() && get(/databases/$(database)/documents/rides/$(rideId)).data.clientId == request.auth.uid);
-
-        allow write: if isAdmin() || (isSignedIn() && request.auth.uid == driverId);
+        allow read: if signedIn() && (request.auth.uid == driverId || isAdmin());
+        allow write: if isAdmin();
       }
     }
 
-    match /settings/{docId} {
+    match /settings/pricing {
       allow read: if true;
       allow write: if isAdmin();
     }
