@@ -13,6 +13,10 @@ export type PlacePoint = {
   address: string;
   lat: number;
   lng: number;
+  streetName?: string;
+  streetNumber?: string;
+  isApproximate?: boolean;
+  mapboxFeatureType?: string;
 };
 
 export type PricingRule = {

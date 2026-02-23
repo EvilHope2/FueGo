@@ -134,3 +134,12 @@ export const runtime = "nodejs";
 - Iconos: `public/icons/*`
 - Instalable en Android desde Chrome (`Agregar a pantalla principal`).
 
+## Direcciones aproximadas (Mapbox)
+- El formulario usa `calle + altura` para origen y destino.
+- Si Mapbox devuelve `address`, se usa punto exacto.
+- Si solo devuelve `street`, se permite continuar con punto aproximado y se guarda:
+  - `streetName`
+  - `streetNumber`
+  - `isApproximate=true`
+  - `mapboxFeatureType="street"`
+

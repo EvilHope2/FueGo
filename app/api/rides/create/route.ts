@@ -16,8 +16,8 @@ export async function POST(req: NextRequest) {
     const distanceKm = Number(body?.distanceKm || 0);
     const durationMin = Number(body?.durationMin || 0);
 
-    if (!pickup?.address || !dropoff?.address || distanceKm <= 0 || durationMin <= 0) {
-      return NextResponse.json({ error: "Datos invalidos" }, { status: 400 });
+    if (!pickup?.address || !dropoff?.address || !pickup?.streetNumber || !dropoff?.streetNumber || distanceKm <= 0 || durationMin <= 0) {
+      return NextResponse.json({ error: "Datos invalidos. Ingresa calle y altura para origen y destino." }, { status: 400 });
     }
 
     const pricingSnap = await adminDb().doc("settings/pricing").get();

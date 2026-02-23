@@ -5,19 +5,18 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import PlacesAutocomplete from "@/components/PlacesAutocomplete";
 import { useRoleGuard } from "@/lib/guards";
-import { PlaceResult, getRoute } from "@/lib/mapbox";
+import { getRoute } from "@/lib/mapbox";
 import { authedFetch } from "@/lib/auth";
 import { DEFAULT_CENTER, formatCurrency } from "@/lib/utils";
+import { PlacePoint } from "@/lib/types";
 
 const MapboxMap = dynamic(() => import("@/components/MapboxMap"), { ssr: false });
 
 export default function ClienteHomePage() {
   const guard = useRoleGuard(["client"]);
   const [center, setCenter] = useState(DEFAULT_CENTER);
-  const [pickupText, setPickupText] = useState("");
-  const [dropoffText, setDropoffText] = useState("");
-  const [pickup, setPickup] = useState<PlaceResult | null>(null);
-  const [dropoff, setDropoff] = useState<PlaceResult | null>(null);
+  const [pickup, setPickup] = useState<PlacePoint | null>(null);
+  const [dropoff, setDropoff] = useState<PlacePoint | null>(null);
   const [route, setRoute] = useState<any>(null);
   const [estimate, setEstimate] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -52,10 +51,18 @@ export default function ClienteHomePage() {
     })();
   }, [pickup, dropoff]);
 
-  const canCreateRide = useMemo(() => !!pickup && !!dropoff && !!route && !!estimate, [pickup, dropoff, route, estimate]);
+  const canCreateRide = useMemo(
+    () => !!pickup && !!dropoff && !!pickup.streetNumber && !!dropoff.streetNumber && !!route && !!estimate,
+    [pickup, dropoff, route, estimate],
+  );
 
   async function requestRide() {
+    if (!pickup?.streetNumber || !dropoff?.streetNumber) {
+      setError("Ingresa la altura (ej. 295) en origen y destino.");
+      return;
+    }
     if (!canCreateRide) return;
+
     setLoading(true);
     setError("");
     try {
@@ -84,36 +91,16 @@ export default function ClienteHomePage() {
           Historial
         </Link>
       </div>
+
       <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr]">
         <MapboxMap center={pickup || center} pickup={pickup} dropoff={dropoff} routeGeoJson={route?.geometryGeoJson || null} />
+
         <section className="space-y-3 rounded-2xl bg-white p-4 shadow-sm">
-          <PlacesAutocomplete
-            label="Origen"
-            value={pickupText}
-            onChange={(v) => {
-              setPickupText(v);
-              setPickup(null);
-            }}
-            onSelect={(p) => {
-              setPickup(p);
-              setPickupText(p.address);
-            }}
-          />
-          <PlacesAutocomplete
-            label="Destino"
-            value={dropoffText}
-            onChange={(v) => {
-              setDropoffText(v);
-              setDropoff(null);
-            }}
-            onSelect={(p) => {
-              setDropoff(p);
-              setDropoffText(p.address);
-            }}
-          />
+          <PlacesAutocomplete label="Origen" proximity={center} onResolved={setPickup} />
+          <PlacesAutocomplete label="Destino" proximity={center} onResolved={setDropoff} />
 
           <div className="rounded-xl bg-slate-100 px-3 py-2 text-sm">
-            {route ? `${route.distanceKm} km • ${route.durationMin} min` : "Selecciona origen y destino"}
+            {route ? `${route.distanceKm} km - ${route.durationMin} min` : "Selecciona calle y altura para origen y destino"}
           </div>
 
           <div className="rounded-xl bg-teal-50 px-3 py-2 text-sm">
@@ -121,8 +108,16 @@ export default function ClienteHomePage() {
             {estimate?.pricingBreakdown ? (
               <div className="mt-2 space-y-1 text-xs text-slate-700">
                 <p>Base: {formatCurrency(estimate.pricingBreakdown.basePrice)}</p>
-                {estimate.appliedMultipliers?.time > 1 ? <p>{estimate.appliedMultipliers.timeRuleName || "Nocturno"} x{estimate.appliedMultipliers.time.toFixed(2)}</p> : null}
-                {estimate.appliedMultipliers?.weather > 1 ? <p>{estimate.appliedMultipliers.weatherLabel || "Clima"} x{estimate.appliedMultipliers.weather.toFixed(2)}</p> : null}
+                {estimate.appliedMultipliers?.time > 1 ? (
+                  <p>
+                    {estimate.appliedMultipliers.timeRuleName || "Nocturno"} x{estimate.appliedMultipliers.time.toFixed(2)}
+                  </p>
+                ) : null}
+                {estimate.appliedMultipliers?.weather > 1 ? (
+                  <p>
+                    {estimate.appliedMultipliers.weatherLabel || "Clima"} x{estimate.appliedMultipliers.weather.toFixed(2)}
+                  </p>
+                ) : null}
                 <p className="font-semibold">Total: {formatCurrency(estimate.price)}</p>
               </div>
             ) : null}
@@ -137,4 +132,3 @@ export default function ClienteHomePage() {
     </main>
   );
 }
-

@@ -2,7 +2,16 @@ export type PlaceResult = {
   address: string;
   lat: number;
   lng: number;
+  placeType: string;
+  text: string;
+  isExactAddress: boolean;
 };
+
+export type SearchPlaceOptions = {
+  proximity?: { lat: number; lng: number } | null;
+};
+
+const RIO_GRANDE_BBOX = "-67.89,-53.90,-67.56,-53.65";
 
 function getToken() {
   const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
@@ -10,20 +19,39 @@ function getToken() {
   return token;
 }
 
-export async function searchPlaces(query: string): Promise<PlaceResult[]> {
+export async function searchPlaces(query: string, options?: SearchPlaceOptions): Promise<PlaceResult[]> {
   const q = query.trim();
   if (q.length < 3) return [];
 
-  const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(q)}.json?autocomplete=true&limit=5&language=es&country=AR&access_token=${getToken()}`;
+  const params = new URLSearchParams({
+    autocomplete: "true",
+    limit: "5",
+    language: "es",
+    country: "AR",
+    types: "address,street",
+    bbox: RIO_GRANDE_BBOX,
+    access_token: getToken(),
+  });
+
+  if (options?.proximity) {
+    params.set("proximity", `${options.proximity.lng},${options.proximity.lat}`);
+  }
+
+  const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(q)}.json?${params.toString()}`;
   const res = await fetch(url);
   if (!res.ok) return [];
-  const json = await res.json();
 
-  return (json.features || []).map((f: any) => ({
-    address: f.place_name,
-    lng: f.center?.[0],
-    lat: f.center?.[1],
-  }));
+  const json = await res.json();
+  return (json.features || [])
+    .map((f: any) => ({
+      address: f.place_name,
+      lng: f.center?.[0],
+      lat: f.center?.[1],
+      placeType: Array.isArray(f.place_type) ? f.place_type[0] : "unknown",
+      text: f.text || f.place_name || "",
+      isExactAddress: Array.isArray(f.place_type) && f.place_type.includes("address"),
+    }))
+    .filter((p: PlaceResult) => Number.isFinite(p.lat) && Number.isFinite(p.lng));
 }
 
 export async function getRoute(pickup: { lat: number; lng: number }, dropoff: { lat: number; lng: number }) {
@@ -40,4 +68,3 @@ export async function getRoute(pickup: { lat: number; lng: number }, dropoff: { 
     geometryGeoJson: route.geometry,
   };
 }
-
