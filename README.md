@@ -52,16 +52,28 @@ npm run build
 ## Deploy Netlify (paso a paso)
 1. Crear sitio en Netlify desde GitHub.
 2. Seleccionar este repo.
-3. Netlify detecta `netlify.toml`:
+3. Confirmar que el proyecto use **Root directory vacio** (este Next.js vive en la raiz, no en `/web`).
+4. Netlify detecta `netlify.toml`:
    - build command: `npm run build`
    - publish: `.next`
    - plugin: `@netlify/plugin-nextjs`
-4. Ir a `Site configuration` -> `Environment variables`.
-5. Cargar todas las `NEXT_PUBLIC_FIREBASE_*` + `NEXT_PUBLIC_MAPBOX_TOKEN` + variables Admin.
-6. Hacer `Clear cache and deploy site`.
+5. Ir a `Site configuration` -> `Environment variables`.
+6. Cargar todas las `NEXT_PUBLIC_FIREBASE_*` + `NEXT_PUBLIC_MAPBOX_TOKEN` + variables Admin.
+7. Verificar que queden en `All scopes` y con nombres exactos.
+8. Hacer `Clear cache and deploy site`.
 
 Si falta alguna variable publica, la app mostrara:
 `Configuracion incompleta del sitio` con el detalle de variables faltantes.
+
+## Debug de env en produccion
+- Endpoint protegido (solo admin): `GET /api/debug/env`
+- Devuelve solo booleanos:
+  - `hasApiKey`
+  - `hasAuthDomain`
+  - `hasProjectId`
+  - `hasAppId`
+  - `hasDbUrl`
+  - `hasMapboxToken`
 
 ## Pricing inicial
 Crear doc `settings/pricing` en Firestore:
