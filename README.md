@@ -10,7 +10,7 @@ FueGo es una PWA tipo ride-hailing para Rio Grande, Tierra del Fuego.
 - Realtime Database (realtime)
 - API routes con Firebase Admin
 - Mapbox GL JS + Geocoding + Directions
-- PWA con `next-pwa`
+- PWA con `manifest.webmanifest` + `sw.js`
 
 ## Arquitectura de datos
 ### Firestore (persistente)
@@ -111,20 +111,22 @@ npm run typecheck
 npm run build
 ```
 
-## Deploy en Vercel
-1. Importar repo
-2. Framework Preset: `Next.js`
-3. Root Directory: dejar vacio (root del repo)
-4. Build Command: `npm run build`
-5. Output Directory: dejar vacio
-6. Node.js Version: `20.x`
-7. Cargar variables de entorno de `.env.example` (Production/Preview)
-8. Deploy
+## Deploy en Netlify
+1. Importar repo desde GitHub.
+2. Build settings:
+   - Base directory: vacio (root)
+   - Build command: `npm run build`
+   - Publish directory: `.next`
+3. Asegurar Node `20` en Netlify.
+4. Cargar todas las env vars de `.env.example`.
+5. Deploy.
 
-Si usaste una URL custom (`fue-go.vercel.app`) y ves `404`, reasigna el alias al ultimo deployment:
-```bash
-npx vercel alias set <deployment-url> fue-go.vercel.app
-```
+Este repo incluye `netlify.toml` + plugin oficial `@netlify/plugin-nextjs`.
+
+Notas:
+- La carpeta `functions/` (Firebase Functions) queda fuera del typecheck/build del frontend por `tsconfig.json`.
+- Las API routes de Next que usan Admin SDK fuerzan `runtime = "nodejs"`.
+- `FIREBASE_ADMIN_PRIVATE_KEY` debe guardarse con `\\n` y en runtime se transforma con `replace(/\\n/g, "\n")`.
 
 ## Seed admin (opcional)
 ```bash
