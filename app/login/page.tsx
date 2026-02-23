@@ -20,12 +20,14 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
     try {
+      let resolvedRole: "client" | "driver" | "admin" = "client";
       if (mode === "login") {
-        await login(email, password);
+        resolvedRole = await login(email, password);
       } else {
-        await register(name, email, password, role);
+        resolvedRole = await register(name, email, password, role);
       }
-      if (role === "driver") router.push("/chofer/home");
+      if (resolvedRole === "driver") router.push("/chofer/home");
+      else if (resolvedRole === "admin") router.push("/admin/viajes");
       else router.push("/cliente/home");
     } catch (err: any) {
       setError(err.message || "Error al autenticar");

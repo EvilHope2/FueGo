@@ -17,8 +17,8 @@ type AuthCtx = {
   user: User | null;
   role: Role | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string, role: "client" | "driver") => Promise<void>;
+  login: (email: string, password: string) => Promise<Role>;
+  register: (name: string, email: string, password: string, role: "client" | "driver") => Promise<Role>;
   logout: () => Promise<void>;
 };
 
@@ -55,7 +55,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loading,
       login: async (email, password) => {
         if (!firebaseClientStatus.ok) throw new Error(firebaseClientStatus.message || "Firebase no configurado");
-        await signInWithEmailAndPassword(firebaseAuth, email, password);
+        const cred = await signInWithEmailAndPassword(firebaseAuth, email, password);
+        const profile = await getDoc(doc(firestore, "users", cred.user.uid));
+        const resolvedRole = (profile.data()?.role || "client") as Role;
+        setRole(resolvedRole);
+        return resolvedRole;
       },
       register: async (name, email, password, userRole) => {
         if (!firebaseClientStatus.ok) throw new Error(firebaseClientStatus.message || "Firebase no configurado");
@@ -64,6 +68,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (userRole === "driver") {
           await createDriverProfile(cred.user.uid);
         }
+        setRole(userRole);
+        return userRole;
       },
       logout: async () => {
         if (!firebaseClientStatus.ok) return;
