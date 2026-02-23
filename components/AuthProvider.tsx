@@ -9,7 +9,7 @@ import {
   User,
 } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
-import { firebaseAuth, firestore } from "@/lib/firebaseClient";
+import { firebaseAuth, firebaseClientStatus, firestore } from "@/lib/firebaseClient";
 import { createDriverProfile, upsertUserProfile } from "@/lib/firestore";
 import { Role } from "@/lib/types";
 
@@ -30,6 +30,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!firebaseClientStatus.ok) {
+      setLoading(false);
+      return;
+    }
+
     return onAuthStateChanged(firebaseAuth, async (nextUser) => {
       setUser(nextUser);
       if (!nextUser) {
@@ -49,9 +54,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       role,
       loading,
       login: async (email, password) => {
+        if (!firebaseClientStatus.ok) throw new Error(firebaseClientStatus.message || "Firebase no configurado");
         await signInWithEmailAndPassword(firebaseAuth, email, password);
       },
       register: async (name, email, password, userRole) => {
+        if (!firebaseClientStatus.ok) throw new Error(firebaseClientStatus.message || "Firebase no configurado");
         const cred = await createUserWithEmailAndPassword(firebaseAuth, email, password);
         await upsertUserProfile(cred.user.uid, { name, role: userRole });
         if (userRole === "driver") {
@@ -59,6 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       },
       logout: async () => {
+        if (!firebaseClientStatus.ok) return;
         await signOut(firebaseAuth);
       },
     }),

@@ -24,7 +24,10 @@ Copiar `.env.example` a `.env.local` y completar:
 - `NEXT_PUBLIC_FIREBASE_API_KEY`
 - `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
 - `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
+- `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` (opcional recomendado)
+- `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` (opcional recomendado)
 - `NEXT_PUBLIC_FIREBASE_APP_ID`
+- `NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID` (opcional)
 - `NEXT_PUBLIC_FIREBASE_DATABASE_URL`
 - `NEXT_PUBLIC_MAPBOX_TOKEN`
 - `NEXT_PUBLIC_SUPPORT_WHATSAPP`
@@ -53,8 +56,12 @@ npm run build
    - build command: `npm run build`
    - publish: `.next`
    - plugin: `@netlify/plugin-nextjs`
-4. Configurar Environment Variables (las de arriba).
-5. Deploy.
+4. Ir a `Site configuration` -> `Environment variables`.
+5. Cargar todas las `NEXT_PUBLIC_FIREBASE_*` + `NEXT_PUBLIC_MAPBOX_TOKEN` + variables Admin.
+6. Hacer `Clear cache and deploy site`.
+
+Si falta alguna variable publica, la app mostrara:
+`Configuracion incompleta del sitio` con el detalle de variables faltantes.
 
 ## Pricing inicial
 Crear doc `settings/pricing` en Firestore:

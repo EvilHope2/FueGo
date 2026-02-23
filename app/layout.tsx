@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "@/styles/globals.css";
 import { AuthProvider } from "@/components/AuthProvider";
+import FirebaseConfigGate from "@/components/FirebaseConfigGate";
 import ServiceWorkerInit from "@/components/ServiceWorkerInit";
 
 export const metadata: Metadata = {
@@ -14,7 +15,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="es">
       <body>
         <ServiceWorkerInit />
-        <AuthProvider>{children}</AuthProvider>
+        <FirebaseConfigGate>
+          <AuthProvider>{children}</AuthProvider>
+        </FirebaseConfigGate>
       </body>
     </html>
   );

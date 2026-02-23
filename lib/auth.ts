@@ -1,8 +1,11 @@
 "use client";
 
-import { firebaseAuth } from "@/lib/firebaseClient";
+import { firebaseAuth, firebaseClientStatus } from "@/lib/firebaseClient";
 
 export async function getIdTokenOrThrow() {
+  if (!firebaseClientStatus.ok) {
+    throw new Error(firebaseClientStatus.message || "Firebase no configurado");
+  }
   const user = firebaseAuth.currentUser;
   if (!user) throw new Error("Debes iniciar sesion");
   return user.getIdToken();
